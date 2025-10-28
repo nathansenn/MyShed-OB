@@ -1,0 +1,487 @@
+// MyShed Onboarding Portal Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CLIENT & PROGRESS TRACKING
+// ============================================
+
+model Client {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  companyName       String
+  ownerName         String?
+  contactNumber     String?
+  emailAddress      String?
+  websiteLink       String?
+  fullAddress       String?
+
+  // Color Scheme
+  primaryColor      String?
+  secondaryColor    String?
+
+  // Progress Tracking
+  overallProgress   Float    @default(0)
+  completedFields   Int      @default(0)
+  totalFields       Int      @default(84)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  stores            Store[]
+  systemUsers       SystemUser[]
+  buildingStyles    BuildingStyle[]
+  doors             Door[]
+  windows           Window[]
+  roofColors        RoofColor[]
+  sidingColors      SidingColor[]
+  trimColors        TrimColor[]
+  interiorOptions   InteriorOption[]
+  porchOptions      PorchOption[]
+  companyDetails    CompanyDetails?
+  taxInfo           TaxInfo?
+  deliveryOptions   DeliveryOptions?
+  financingOptions  FinancingOptions?
+  paymentInfo       PaymentInfo?
+}
+
+// ============================================
+// STORE INFORMATION (Section A)
+// ============================================
+
+model Store {
+  id            String   @id @default(cuid())
+  clientId      String
+  name          String
+  address       String?
+  zipCode       String?
+  phoneNumber   String?
+  storeHours    String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// SYSTEM USERS (Section B)
+// ============================================
+
+model SystemUser {
+  id                String   @id @default(cuid())
+  clientId          String
+  role              String   // Administrator, Salesperson, Sales Manager, Driver, Manufacturing
+  fullName          String
+  emailAddress      String?
+  phoneNumbers      String?  // JSON string of phone numbers
+  salesCommission   String?
+  assignedStore     String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// BUILDING STYLES (Section C)
+// ============================================
+
+model BuildingStyle {
+  id                    String   @id @default(cuid())
+  clientId              String
+  name                  String
+  myshedCatalogCode     String?
+  description           String?
+  images                String?  // JSON array of image URLs
+  progress              Float    @default(0)
+  status                String   @default("incomplete") // complete, incomplete, partial
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  pricingMatrix         PricingMatrix[]
+  compatibleDoors       String?  // JSON array of door IDs
+  compatibleWindows     String?  // JSON array of window IDs
+  compatibleRoofing     String?  // JSON array of roof color IDs
+  compatibleSiding      String?  // JSON array of siding color IDs
+
+  @@index([clientId])
+}
+
+model PricingMatrix {
+  id                String   @id @default(cuid())
+  buildingStyleId   String
+  width             Int
+  depth             Int
+  material          String   // Wood, Vinyl, Metal
+  basePrice         Float
+  sku               String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  buildingStyle     BuildingStyle @relation(fields: [buildingStyleId], references: [id], onDelete: Cascade)
+
+  @@index([buildingStyleId])
+}
+
+// ============================================
+// DOORS (Section G)
+// ============================================
+
+model Door {
+  id                    String   @id @default(cuid())
+  clientId              String
+  name                  String
+  myshedCatalogCode     String?
+  myshedCatalogImage    String?
+  basePrice             Float?
+  pricingType           String?  // fixed, varies_by_style, varies_by_size
+  isStandard            Boolean  @default(false)
+  allowedStyles         String?  // JSON array of building style IDs
+  progress              Float    @default(0)
+  status                String   @default("incomplete")
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// WINDOWS (Section H)
+// ============================================
+
+model Window {
+  id                    String   @id @default(cuid())
+  clientId              String
+  name                  String
+  myshedCatalogCode     String?
+  myshedCatalogImage    String?
+  basePrice             Float?
+  pricingType           String?
+  isStandard            Boolean  @default(false)
+  allowedStyles         String?  // JSON array of building style IDs
+  progress              Float    @default(0)
+  status                String   @default("incomplete")
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// ROOFING (Section D)
+// ============================================
+
+model RoofColor {
+  id                String   @id @default(cuid())
+  clientId          String
+  name              String
+  colorCode         String?
+  imageUrl          String?
+  additionalPrice   Float?   @default(0)
+  allowedStyles     String?  // JSON array of building style IDs
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, name])
+  @@index([clientId])
+}
+
+// ============================================
+// SIDING (Section E)
+// ============================================
+
+model SidingColor {
+  id                String   @id @default(cuid())
+  clientId          String
+  name              String
+  colorCode         String?
+  imageUrl          String?
+  additionalPrice   Float?   @default(0)
+  material          String   // Wood, Vinyl, Metal
+  allowedStyles     String?  // JSON array of building style IDs
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, name, material])
+  @@index([clientId])
+}
+
+// ============================================
+// TRIM (Section F)
+// ============================================
+
+model TrimColor {
+  id                String   @id @default(cuid())
+  clientId          String
+  name              String
+  colorCode         String?
+  imageUrl          String?
+  additionalPrice   Float?
+  trimType          String?
+  allowedStyles     String?  // JSON array of building style IDs
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// INTERIOR OPTIONS (Section I)
+// ============================================
+
+model InteriorOption {
+  id                String   @id @default(cuid())
+  clientId          String
+  optionType        String   // shelves, loft, cupola, weathervane, ramp, vent, dormer, etc.
+  name              String
+  size              String?
+  pricePerFoot      Float?
+  basePrice         Float?
+  allowedStyles     String?  // JSON array of building style IDs
+  imageUrl          String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// PORCH OPTIONS (Section J)
+// ============================================
+
+model PorchOption {
+  id                String   @id @default(cuid())
+  clientId          String
+  name              String
+  myshedCatalogCode String?
+  porchType         String?  // front, side, wrap-around, etc.
+  basePrice         Float?
+  pricePerFoot      Float?
+  isStained         Boolean  @default(false)
+  paintColors       String?  // JSON array of color options
+  allowedStyles     String?  // JSON array of building style IDs
+  imageUrl          String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================
+// COMPANY DETAILS (Section L)
+// ============================================
+
+model CompanyDetails {
+  id                    String   @id @default(cuid())
+  clientId              String   @unique
+  mainAddress           String?
+  phoneNumber           String?
+  emailAddress          String?
+  timezone              String?
+  businessHours         String?
+  companyBackground     String?
+  logoUrl               String?
+  disclaimers           String?
+  buildingSerialFormat  String?
+  stripePublishableKey  String?
+  stripeSecretKey       String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// SALES TAX (Section M)
+// ============================================
+
+model TaxInfo {
+  id                String   @id @default(cuid())
+  clientId          String   @unique
+  taxPercentage     Float?
+  useTaxJar         Boolean  @default(false)
+  taxJarApiToken    String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// DELIVERY OPTIONS (Section N)
+// ============================================
+
+model DeliveryOptions {
+  id                    String   @id @default(cuid())
+  clientId              String   @unique
+  offersDelivery        Boolean  @default(true)
+  freeDeliveryRadius    Int?     // in miles
+  pricePerMile          Float?
+  deliveryMethod        String?
+  buildTimeline         String?
+  siteRequirements      String?
+  serviceArea           String?  // JSON array of service areas
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// FINANCING OPTIONS (Section O)
+// ============================================
+
+model FinancingOptions {
+  id                String   @id @default(cuid())
+  clientId          String   @unique
+  offersFinancing   Boolean  @default(false)
+  financingDetails  String?  // JSON or text description
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// PAYMENT INFORMATION (Section P)
+// ============================================
+
+model PaymentInfo {
+  id                    String   @id @default(cuid())
+  clientId              String   @unique
+  acceptedMethods       String?  // JSON array: cash, check, credit cards
+  depositPercentage     Int?
+  depositRefundable     Boolean  @default(true)
+  cancellationPolicy    String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// MYSHED CATALOG (Read-Only Reference Data)
+// ============================================
+
+model CatalogDoor {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogWindow {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogBuildingStyle {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String?
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogPorch {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogSiding {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogTrim {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogRoofing {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model CatalogShelf {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  imageUrl      String
+  category      String?
+
+  createdAt     DateTime @default(now())
+}
