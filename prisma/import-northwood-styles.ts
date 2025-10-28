@@ -17,6 +17,16 @@ async function main() {
 
   console.log(`✅ Found client: ${client.companyName} (ID: ${client.id})\n`);
 
+  // Check if building styles already exist for this client
+  const existingStyles = await prisma.buildingStyle.count({
+    where: { clientId: client.id },
+  });
+
+  if (existingStyles > 0) {
+    console.log(`⏭️  Building styles already exist (${existingStyles} found). Skipping import to avoid duplicates.\n`);
+    return;
+  }
+
   // Building Style 1: Classic Shed
   console.log('Adding Classic Shed...');
   const classicShed = await prisma.buildingStyle.create({
