@@ -8,4 +8,4 @@ cmds = ["npm ci"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npx prisma migrate deploy && npx prisma db seed && npm run import-northwood-complete && npm run start"
+cmd = "bash start.sh"
