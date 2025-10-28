@@ -134,6 +134,26 @@ async function main() {
   }
   console.log(`✅ Seeded ${catalogData['shelves-storage'].items.length} shelves & storage options`)
 
+  // Create Northwood Outdoor client if it doesn't exist
+  console.log('📂 Creating Northwood Outdoor client...')
+  const northwoodClient = await prisma.client.upsert({
+    where: { slug: 'northwood-outdoor' },
+    update: {},
+    create: {
+      slug: 'northwood-outdoor',
+      companyName: 'Northwood Outdoor',
+      ownerName: 'Northwood Team',
+      emailAddress: 'info@northwoodoutdoor.com',
+      websiteLink: 'https://northwoodoutdoor.com',
+      primaryColor: '#2D5016',
+      secondaryColor: '#8B4513',
+      overallProgress: 0,
+      completedFields: 0,
+      totalFields: 84,
+    },
+  })
+  console.log(`✅ Created/verified Northwood Outdoor client`)
+
   console.log('✨ MyShed catalog seeding complete!')
 }
 
