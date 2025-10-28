@@ -12,5 +12,8 @@ npx prisma db seed
 echo "🏢 Importing Northwood Outdoor configuration..."
 npm run import-northwood-complete
 
+echo "🏗️  Importing Northwood Outdoor building styles..."
+npm run import-northwood-styles
+
 echo "✅ Database setup complete. Starting server..."
 npm run start
