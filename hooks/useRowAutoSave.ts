@@ -9,8 +9,8 @@ interface UseRowAutoSaveOptions<T> {
 
 export function useRowAutoSave<T>({ onSave, debounceMs = 500 }: UseRowAutoSaveOptions<T>) {
   const [saveStatuses, setSaveStatuses] = useState<Record<string, SaveStatus>>({});
-  const timeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
-  const savedTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const timeoutsRef = useRef<Record<string, NodeJS.Timeout | undefined>>({});
+  const savedTimeoutsRef = useRef<Record<string, NodeJS.Timeout | undefined>>({});
 
   const saveField = useCallback(
     async (rowId: string, field: keyof T, value: any) => {
